@@ -1,0 +1,20 @@
+{
+    "name": "satori/debug",
+    "description": "Debug components",
+    "keywords": ["Satori", "debug", "xdebug", "var_dump"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Yuriy Davletshin",
+            "email": "yuriy.davletshin@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.1"
+    },
+    "autoload": {
+        "files": [
+            "src/xdebug.php"
+        ]
+    }
+}
