@@ -386,8 +386,8 @@ DAMPSTYLE;
 
         protected const _FIRST_LINE = "<pre class='_vardump'>" . self::EOL;
         protected const _LAST_LINE = "</pre>" . self::EOL;
-        protected const _FILE_PATH_AND_LINE = "<small>%s:%s:</small>" . self::EOL;
-        protected const _SCALAR = "<small>%s</small> %s";
+        protected const _FILE_PATH_AND_LINE = "<span class='_path'>%s:%s:</span>" . self::EOL;
+        protected const _SCALAR = "<span class='_scalar'>%s</span> %s";
         protected const _STRING = "<span class='_string'>'%s'</span> <i>(length=%s)</i>";
         protected const _INT = "<span class='_int'>%s</span>";
         protected const _FLOAT = "<span class='_float'>%s</span>";
