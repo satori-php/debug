@@ -17,24 +17,39 @@ namespace Satori\Debug {
     class BaseVarDump
     {
         /**
+         * @var string End of line.
+         */
+        public const EOL = "\n";
+
+        /**
+         * @var string CSS style sheets.
+         */
+        protected const _STYLE = "";
+
+        /**
          * @var string Indent.
          */
-        protected const _INDENT = '    ';
+        protected const _INDENT = "    ";
 
         /**
          * @var string First line format.
          */
-        protected const _FIRST_LINE = "%s:%s:\n";
+        protected const _FIRST_LINE = "";
 
         /**
          * @var string Last line format.
          */
-        protected const _LAST_LINE = "\n";
+        protected const _LAST_LINE = self::EOL;
+
+        /**
+         * @var string File path and line number.
+         */
+        protected const _FILE_PATH_AND_LINE = "%s:%s:" . self::EOL;
 
         /**
          * @var string Scalar format.
          */
-        protected const _SCALAR = "%s %s\n";
+        protected const _SCALAR = "%s %s";
 
         /**
          * @var string String format.
@@ -69,12 +84,12 @@ namespace Satori\Debug {
         /**
          * @var string Array format.
          */
-        protected const _ARRAY = "%sarray (size=%s)\n";
+        protected const _ARRAY = "%sarray (size=%s)" . self::EOL;
 
         /**
          * @var string Empty array format.
          */
-        protected const _EMPTY_ARRAY = "%s  empty\n";
+        protected const _EMPTY_ARRAY = "%s  empty" . self::EOL;
 
         /**
          * @var string Array item format.
@@ -84,17 +99,22 @@ namespace Satori\Debug {
         /**
          * @var string Object format.
          */
-        protected const _OBJECT = "%sobject(%s)[%s]\n";
+        protected const _OBJECT = "%sobject(%s)[%s]" . self::EOL;
 
         /**
          * @var string Object property format.
          */
-        protected const _OBJECT_PROP = "%s  %s %s => ";
+        protected const _OBJECT_PROPERTY = "%s  %s %s => ";
+
+        /**
+         * @var string Visibility for an object property.
+         */
+        protected const _VISIBILITY = "%s";
 
         /**
          * @var array<string, string> Type names to display.
          */
-        protected const _TYPES = [
+        protected const _TYPE_NAMES = [
             'boolean' => 'boolean',
             'integer' => 'int',
             'double' => 'float',
@@ -104,15 +124,15 @@ namespace Satori\Debug {
         /**
          * Dumps information about the contents of variables.
          *
-         * @param string $file The file path.
-         * @param int    $line The line number.
-         * @param array  $vars Variables.
+         * @param string $file   The file path.
+         * @param int    $line   The line number.
+         * @param array  $values Values.
          */
-        public function __construct(string $file, int $line, array $vars)
+        public function __construct(string $file, int $line, array $values)
         {
             $this->printFirstLine($file, $line);
-            foreach ($vars as $var) {
-                $this->printValue($var);
+            foreach ($values as $value) {
+                $this->printValue($value);
             }
             $this->printLastLine();
         }
@@ -125,7 +145,9 @@ namespace Satori\Debug {
          */
         protected function printFirstLine(string $file, int $line): void
         {
-            echo sprintf(static::_FIRST_LINE, $file, $line);
+            echo static::_STYLE;
+            echo static::_FIRST_LINE;
+            echo sprintf(static::_FILE_PATH_AND_LINE, $file, $line);
         }
 
         /**
@@ -151,7 +173,7 @@ namespace Satori\Debug {
             } elseif (is_scalar($value)) {
                 echo $this->formatScalar($value, $indent);
             } else {
-                echo sprintf("%s\n", $this->formatValue($value));
+                echo sprintf("%s" . static::EOL, $this->formatValue($value));
             }
         }
 
@@ -176,11 +198,10 @@ namespace Satori\Debug {
          * @param object $object The object.
          * @param string $indent The indent.
          */
-        protected function printObject($object, string $indent = ''): void
+        protected function printObject(object $object, string $indent = ''): void
         {
             echo $this->formatObject($object, $indent);
-            $reflect = new \ReflectionClass($object);
-            $properties = $reflect->getProperties(
+            $properties = (new \ReflectionClass($object))->getProperties(
                 \ReflectionProperty::IS_PUBLIC |
                 \ReflectionProperty::IS_PROTECTED |
                 \ReflectionProperty::IS_PRIVATE |
@@ -201,7 +222,7 @@ namespace Satori\Debug {
                 } else {
                     $value = $property->getValue($object);
                 }
-                echo $this->formatObjectProp($visibility, $property->getName(), $indent);
+                echo $this->formatObjectProperty($visibility, $property->getName(), $indent);
                 $this->printValue($value, $indent . static::_INDENT);
             }
         }
@@ -237,7 +258,7 @@ namespace Satori\Debug {
                 case 'boolean':
                     return sprintf(static::_BOOL, $value ? 'true' : 'false');
                 case 'string':
-                    return sprintf(static::_STRING, rtrim($value, "\n"), mb_strlen($value));
+                    return sprintf(static::_STRING, rtrim($value, static::EOL), mb_strlen($value));
                 case 'resource':
                     return sprintf(static::_RESOURCE, intval($value), get_resource_type($value));
                 default:
@@ -255,9 +276,10 @@ namespace Satori\Debug {
          */
         protected function formatScalar($value, string $indent = ''): string
         {
-            $type = static::_TYPES[gettype($value)];
+            $originalTypeName = gettype($value);
+            $typeName = static::_TYPE_NAMES[$originalTypeName] ?? $originalTypeName;
 
-            return sprintf(static::_SCALAR, $type, $this->formatValue($value));
+            return sprintf(static::_SCALAR . static::EOL, $typeName, $this->formatValue($value));
         }
 
         /**
@@ -270,7 +292,7 @@ namespace Satori\Debug {
          */
         protected function formatArray(array $array, string $indent = ''): string
         {
-            $firstIndent = $indent ? "\n$indent" : $indent;
+            $firstIndent = $indent ? static::EOL . $indent : $indent;
             $string = sprintf(static::_ARRAY, $firstIndent, count($array));
             if (empty($array)) {
                 $string .= sprintf(static::_EMPTY_ARRAY, $indent);
@@ -302,7 +324,7 @@ namespace Satori\Debug {
          */
         protected function formatObject($object, string $indent = ''): string
         {
-            $indent = $indent ? "\n$indent" : $indent;
+            $indent = $indent ? static::EOL . $indent : $indent;
 
             return sprintf(static::_OBJECT, $indent, get_class($object), spl_object_id($object));
         }
@@ -310,15 +332,16 @@ namespace Satori\Debug {
         /**
          * Formats object property information.
          *
-         * @param string $vsbl   The visibility.
-         * @param string $name   The property name.
-         * @param string $indent The indent.
+         * @param string $visibility The visibility.
+         * @param string $name       The property name.
+         * @param string $indent     The indent.
          *
          * @return string
          */
-        protected function formatObjectProp(string $vsbl, string $name, string $indent = ''): string
+        protected function formatObjectProperty(string $visibility, string $name, string $indent = ''): string
         {
-            return sprintf(static::_OBJECT_PROP, $indent, $vsbl, $this->formatKey($name));
+            $visibility = sprintf(static::_VISIBILITY, $visibility);
+            return sprintf(static::_OBJECT_PROPERTY, $indent, $visibility, $this->formatKey($name));
         }
     }
 
@@ -331,20 +354,52 @@ namespace Satori\Debug {
         /**
          * @see \Satori\Debug\BaseVarDump Constants for information format.
          */
-        protected const _FIRST_LINE = "<pre>\n<small>%s:%s:</small>\n";
-        protected const _LAST_LINE = "</pre>\n";
-        protected const _SCALAR = "<small>%s</small> %s\n";
-        protected const _STRING = "<font color='#cc0000'>'%s'</font> <i>(length=%s)</i>";
-        protected const _INT = "<font color='#4e9a06'>%s</font>";
-        protected const _FLOAT = "<font color='#f57900'>%s</font>";
-        protected const _BOOL = "<font color='#75507b'>%s</font>";
-        protected const _NULL = "<font color='#3465a4'>null</font>";
+        protected const _STYLE = <<<'DAMPSTYLE'
+<style>
+    ._vardump ._string {
+        color: #f00;
+    }
+    ._vardump ._int {
+        color: #008000;
+    }
+    ._vardump ._float {
+        color: #FC7F00; 
+    }
+    ._vardump ._bool {
+        color: #f0f;
+    }
+    ._vardump ._null {
+        color: #5c5cff; 
+        3465a4
+    }
+    ._vardump ._arrow,
+    ._vardump ._empty {
+        color: #999;
+    }
+    ._vardump ._visibility {
+        color: #888;
+    }
+
+</style>
+
+DAMPSTYLE;
+
+        protected const _FIRST_LINE = "<pre class='_vardump'>" . self::EOL;
+        protected const _LAST_LINE = "</pre>" . self::EOL;
+        protected const _FILE_PATH_AND_LINE = "<small>%s:%s:</small>" . self::EOL;
+        protected const _SCALAR = "<small>%s</small> %s";
+        protected const _STRING = "<span class='_string'>'%s'</span> <i>(length=%s)</i>";
+        protected const _INT = "<span class='_int'>%s</span>";
+        protected const _FLOAT = "<span class='_float'>%s</span>";
+        protected const _BOOL = "<span class='_bool'>%s</span>";
+        protected const _NULL = "<span class='_null'>null</span>";
         protected const _RESOURCE = "<b>resource</b>(<i>%s</i>, <i>%s</i>)";
-        protected const _ARRAY = "%s<b>array</b> <i>(size=%s)</i>\n";
-        protected const _EMPTY_ARRAY = "%s  <i><font color='#888a85'>empty</font></i>\n";
-        protected const _ARRAY_ITEM = "%s  %s <font color='#888a85'>=&gt;</font> ";
-        protected const _OBJECT = "%s<b>object</b>(<i>%s</i>)[<i>%s</i>]\n";
-        protected const _OBJECT_PROP = "%s  %s %s <font color='#888a85'>=&gt;</font> ";
+        protected const _ARRAY = "%s<b>array</b> <i>(size=%s)</i>" . self::EOL;
+        protected const _EMPTY_ARRAY = "%s  <i><span class='_empty'>empty</span></i>" . self::EOL;
+        protected const _ARRAY_ITEM = "%s  %s <span class='_arrow'>=&gt;</span> ";
+        protected const _OBJECT = "%s<b>object</b>(<i>%s</i>)[<i>%s</i>]" . self::EOL;
+        protected const _OBJECT_PROPERTY = "%s  %s %s <span class='_arrow'>=&gt;</span> ";
+        protected const _VISIBILITY = "<span class='_visibility'>%s</span>";
     }
 
     /**
@@ -362,11 +417,12 @@ namespace Satori\Debug {
         protected const _BOOL = "\x1b[0;95m%s\x1b[0m";
         protected const _NULL = "\x1b[0;94mnull\x1b[0m";
         protected const _RESOURCE = "resource(%s, %s)";
-        protected const _ARRAY = "%s\x1b[1marray\x1b[0m \x1b[3m(size=%s)\x1b[0m\n";
-        protected const _EMPTY_ARRAY = "%s  \x1b[3;2mempty\x1b[0m\n";
+        protected const _ARRAY = "%s\x1b[1marray\x1b[0m \x1b[3m(size=%s)\x1b[0m" . self::EOL;
+        protected const _EMPTY_ARRAY = "%s  \x1b[3;2mempty\x1b[0m" . self::EOL;
         protected const _ARRAY_ITEM = "%s  %s \x1b[2m=>\x1b[0m ";
-        protected const _OBJECT = "%s\x1b[1mobject\x1b[0m(\x1b[3m%s\x1b[0m)[\x1b[3m%s\x1b[0m]\n";
-        protected const _OBJECT_PROP = "%s  \x1b[2m%s\x1b[0m %s \x1b[2m=>\x1b[0m ";
+        protected const _OBJECT = "%s\x1b[1mobject\x1b[0m(\x1b[3m%s\x1b[0m)[\x1b[3m%s\x1b[0m]" . self::EOL;
+        protected const _OBJECT_PROPERTY = "%s  %s %s \x1b[2m=>\x1b[0m ";
+        protected const _VISIBILITY = "\x1b[2m%s\x1b[0m";
     }
 }
 
@@ -374,15 +430,31 @@ namespace {
 
     use Satori\Debug\{BaseVarDump, WebVarDump, CliVarDump};
 
-    if (!function_exists('dump')) {
+    if (!function_exists('_dump')) {
         /**
          * Dumps monochrome information about the contents of variables.
          * Similar xdebug var_dump.
          */
-        function dump(...$vars): void
+        function _dump(...$values): void
         {
             $call = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 1)[0];
-            new BaseVarDump($call['file'], $call['line'], $vars);
+            new BaseVarDump($call['file'], $call['line'], $values);
+        }
+    }
+
+    if (!function_exists('dump')) {
+        /**
+         * Dumps color information about the contents of variables.
+         * Similar xdebug var_dump.
+         */
+        function dump(...$values): void
+        {
+            $call = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 1)[0];
+            if (php_sapi_name() === 'cli') {
+                new CliVarDump($call['file'], $call['line'], $values);
+            } else {
+                new WebVarDump($call['file'], $call['line'], $values);
+            }
         }
     }
 
@@ -391,14 +463,31 @@ namespace {
          * Dumps color information about the contents of variables.
          * Similar xdebug var_dump.
          */
-        function xdump(...$vars): void
+        function xdump(...$values): void
         {
             $call = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 1)[0];
             if (php_sapi_name() === 'cli') {
-                new CliVarDump($call['file'], $call['line'], $vars);
+                new CliVarDump($call['file'], $call['line'], $values);
             } else {
-                new WebVarDump($call['file'], $call['line'], $vars);
+                new WebVarDump($call['file'], $call['line'], $values);
             }
+        }
+    }
+
+    if (!function_exists('dd')) {
+        /**
+         * Dumps color information about the contents of variables and die.
+         * Similar xdebug var_dump.
+         */
+        function dd(...$values): void
+        {
+            $call = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 1)[0];
+            if (php_sapi_name() === 'cli') {
+                new CliVarDump($call['file'], $call['line'], $values);
+            } else {
+                new WebVarDump($call['file'], $call['line'], $values);
+            }
+            die();
         }
     }
 
@@ -407,13 +496,13 @@ namespace {
          * Dumps color information about the contents of variables and die.
          * Similar xdebug var_dump.
          */
-        function xdd(...$vars): void
+        function xdd(...$values): void
         {
             $call = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 1)[0];
             if (php_sapi_name() === 'cli') {
-                new CliVarDump($call['file'], $call['line'], $vars);
+                new CliVarDump($call['file'], $call['line'], $values);
             } else {
-                new WebVarDump($call['file'], $call['line'], $vars);
+                new WebVarDump($call['file'], $call['line'], $values);
             }
             die();
         }
@@ -424,14 +513,14 @@ namespace {
          * Dumps monochrome information about the contents of variables for a javascript console.
          * Similar xdebug var_dump.
          */
-        function jsdump(...$vars): void
+        function jsdump(...$values): void
         {
-            echo "<script>\n";
+            echo "<script>" . WebVarDump::EOL;
             ob_start();
             $call = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 1)[0];
-            new BaseVarDump($call['file'], $call['line'], $vars);
-            echo "console.dir(" . json_encode(ob_get_clean()) . ")\n";
-            echo "</script>\n";
+            new BaseVarDump($call['file'], $call['line'], $values);
+            echo "console.dir(" . json_encode(ob_get_clean()) . ")" . WebVarDump::EOL;
+            echo "</script>" . WebVarDump::EOL;
         }
     }
 }
