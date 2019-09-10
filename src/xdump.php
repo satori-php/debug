@@ -11,7 +11,7 @@ declare(strict_types=1);
 namespace Satori\Debug {
 
     /**
-     * Dumps monochrome information about the contents of variables.
+     * Dumps monochrome information about contents of variables.
      * Similar xdebug var_dump.
      */
     class BaseVarDump
@@ -32,12 +32,12 @@ namespace Satori\Debug {
         protected const _INDENT = "    ";
 
         /**
-         * @var string First line format.
+         * @var string Format of first line.
          */
         protected const _FIRST_LINE = "";
 
         /**
-         * @var string Last line format.
+         * @var string Format of last line.
          */
         protected const _LAST_LINE = self::EOL;
 
@@ -47,72 +47,72 @@ namespace Satori\Debug {
         protected const _FILE_PATH_AND_LINE = "%s:%s:" . self::EOL;
 
         /**
-         * @var string Scalar format.
+         * @var string Format of a scalar value.
          */
         protected const _SCALAR = "%s %s";
 
         /**
-         * @var string String format.
+         * @var string Format of a string value.
          */
         protected const _STRING = "'%s' (length=%s)";
 
         /**
-         * @var string Integer format.
+         * @var string Format of an integer value.
          */
         protected const _INT = "%s";
 
         /**
-         * @var string Float format.
+         * @var string Format of a float value.
          */
         protected const _FLOAT = "%s";
 
         /**
-         * @var string Boolean format.
+         * @var string Format of a boolean value.
          */
         protected const _BOOL = "%s";
 
         /**
-         * @var string NULL format.
+         * @var string Format of NULL.
          */
         protected const _NULL = "null";
 
         /**
-         * @var string Resource format.
+         * @var string Format of a resource.
          */
         protected const _RESOURCE = "resource(%s, %s)";
 
         /**
-         * @var string Array format.
+         * @var string Format of an array.
          */
         protected const _ARRAY = "%sarray (size=%s)" . self::EOL;
 
         /**
-         * @var string Empty array format.
+         * @var string Format of an empty array.
          */
         protected const _EMPTY_ARRAY = "%s  empty" . self::EOL;
 
         /**
-         * @var string Array item format.
+         * @var string Format of array item.
          */
         protected const _ARRAY_ITEM = "%s  %s => ";
 
         /**
-         * @var string Object format.
+         * @var string Format of an object.
          */
         protected const _OBJECT = "%sobject(%s)[%s]" . self::EOL;
 
         /**
-         * @var string Object property format.
+         * @var string Format of object property.
          */
         protected const _OBJECT_PROPERTY = "%s  %s %s => ";
 
         /**
-         * @var string Visibility for an object property.
+         * @var string Visibility of object property.
          */
         protected const _VISIBILITY = "%s";
 
         /**
-         * @var array<string, string> Type names to display.
+         * @var array<string, string> Names of types to display.
          */
         protected const _TYPE_NAMES = [
             'boolean' => 'boolean',
@@ -138,7 +138,7 @@ namespace Satori\Debug {
         }
 
         /**
-         * Prints a first line.
+         * Prints first line.
          *
          * @param string $file The file path.
          * @param int    $line The line number.
@@ -151,7 +151,7 @@ namespace Satori\Debug {
         }
 
         /**
-         * Prints a list line.
+         * Prints list line.
          */
         protected function printLastLine(): void
         {
@@ -240,7 +240,7 @@ namespace Satori\Debug {
         }
 
         /**
-         * Formats value information.
+         * Formats information about a value.
          *
          * @param mixed $value The value.
          *
@@ -267,7 +267,7 @@ namespace Satori\Debug {
         }
 
         /**
-         * Formats scalar value information.
+         * Formats information about a scalar value.
          *
          * @param mixed  $value  The value.
          * @param string $indent The indent.
@@ -283,7 +283,7 @@ namespace Satori\Debug {
         }
 
         /**
-         * Formats array information.
+         * Formats information about an array.
          *
          * @param array  $array  The array.
          * @param string $indent The indent.
@@ -302,7 +302,7 @@ namespace Satori\Debug {
         }
 
         /**
-         * Formats array item information.
+         * Formats information about array item.
          *
          * @param int|string  $key    The unique key.
          * @param string      $indent The indent.
@@ -315,7 +315,7 @@ namespace Satori\Debug {
         }
 
         /**
-         * Formats object information.
+         * Formats information about an object.
          *
          * @param object $object The object.
          * @param string $indent The indent.
@@ -330,7 +330,7 @@ namespace Satori\Debug {
         }
 
         /**
-         * Formats object property information.
+         * Formats information about object property.
          *
          * @param string $visibility The visibility.
          * @param string $name       The property name.
@@ -346,13 +346,13 @@ namespace Satori\Debug {
     }
 
     /**
-     * Dumps color information about the contents of variables for a browser.
+     * Dumps color information about contents of variables for a browser.
      * Similar xdebug var_dump.
      */
     class WebVarDump extends BaseVarDump
     {
         /**
-         * @see \Satori\Debug\BaseVarDump Constants for information format.
+         * @see \Satori\Debug\BaseVarDump Overridden constants.
          */
         protected const _STYLE = <<<'DAMPSTYLE'
 <style>
@@ -403,13 +403,13 @@ DAMPSTYLE;
     }
 
     /**
-     * Dumps color information about the contents of variables for a CLI.
+     * Dumps color information about contents of variables for a CLI.
      * Similar xdebug var_dump.
      */
     class CliVarDump extends BaseVarDump
     {
         /**
-         * @see \Satori\Debug\BaseVarDump Constants for information format.
+         * @see \Satori\Debug\BaseVarDump Overridden constants.
          */
         protected const _STRING = "\x1b[0;91m'%s'\x1b[0m \x1b[3m(length=%s)\x1b[0m";
         protected const _INT = "\x1b[0;32m%s\x1b[0m";
@@ -432,7 +432,7 @@ namespace {
 
     if (!function_exists('_dump')) {
         /**
-         * Dumps monochrome information about the contents of variables.
+         * Dumps monochrome information about contents of variables.
          * Similar xdebug var_dump.
          */
         function _dump(...$values): void
@@ -444,7 +444,7 @@ namespace {
 
     if (!function_exists('dump')) {
         /**
-         * Dumps color information about the contents of variables.
+         * Dumps color information about contents of variables.
          * Similar xdebug var_dump.
          */
         function dump(...$values): void
@@ -460,7 +460,7 @@ namespace {
 
     if (!function_exists('xdump')) {
         /**
-         * Dumps color information about the contents of variables.
+         * Dumps color information about contents of variables.
          * Similar xdebug var_dump.
          */
         function xdump(...$values): void
@@ -476,7 +476,7 @@ namespace {
 
     if (!function_exists('dd')) {
         /**
-         * Dumps color information about the contents of variables and die.
+         * Dumps color information about contents of variables and dies.
          * Similar xdebug var_dump.
          */
         function dd(...$values): void
@@ -493,7 +493,7 @@ namespace {
 
     if (!function_exists('xdd')) {
         /**
-         * Dumps color information about the contents of variables and die.
+         * Dumps color information about contents of variables and dies.
          * Similar xdebug var_dump.
          */
         function xdd(...$values): void
@@ -510,7 +510,7 @@ namespace {
 
     if (!function_exists('jsdump')) {
         /**
-         * Dumps monochrome information about the contents of variables for a javascript console.
+         * Dumps monochrome information about contents of variables for a javascript console.
          * Similar xdebug var_dump.
          */
         function jsdump(...$values): void
