@@ -32,20 +32,30 @@ namespace Satori\Debug {
         protected const _INDENT = '    ';
 
         /**
-         * @var string Format of first line.
+         * @var string Format of output beginning.
          */
-        protected const _FIRST_LINE = '';
+        protected const _TOP = '';
 
         /**
-         * @var string Format of last line.
+         * @var string Format of output end.
          */
-        protected const _LAST_LINE = self::EOL;
+        protected const _BOTTOM = self::EOL;
 
         /**
          * @var string File path and line number.
          */
         protected const _FILE_PATH_AND_LINE = '%s:%s:' . self::EOL;
 
+
+        /**
+         * @var string Format of dump beginning.
+         */
+        protected const _DUMP_TOP = '';
+
+        /**
+         * @var string Format of dump end.
+         */
+        protected const _DUMP_BOTTOM = '';
         /**
          * @var string Format of a scalar value.
          */
@@ -146,8 +156,9 @@ namespace Satori\Debug {
         protected function printFirstLine(string $file, int $line): void
         {
             echo static::_STYLE;
-            echo static::_FIRST_LINE;
+            echo static::_TOP;
             echo sprintf(static::_FILE_PATH_AND_LINE, $file, $line);
+            echo static::_DUMP_TOP;
         }
 
         /**
@@ -155,7 +166,8 @@ namespace Satori\Debug {
          */
         protected function printLastLine(): void
         {
-            echo static::_LAST_LINE;
+            echo static::_DUMP_BOTTOM;
+            echo static::_BOTTOM;
         }
 
         /**
@@ -356,6 +368,12 @@ namespace Satori\Debug {
          */
         protected const _STYLE = <<<'DAMPSTYLE'
 <style>
+    ._vardump {
+        font-family: monospace;
+    }
+    ._vardump pre {
+        margin: 0;
+    }
     ._vardump ._string {
         color: #f00;
     }
@@ -384,9 +402,11 @@ namespace Satori\Debug {
 
 DAMPSTYLE;
 
-        protected const _FIRST_LINE = '<pre class="_vardump">' . self::EOL;
-        protected const _LAST_LINE = '</pre>' . self::EOL;
-        protected const _FILE_PATH_AND_LINE = '<span class="_path">%s:%s:</span>' . self::EOL;
+        protected const _TOP = '<div class="_vardump">' . self::EOL;
+        protected const _BOTTOM = '</div>' . self::EOL;
+        protected const _FILE_PATH_AND_LINE = '<div class="_path">%s:%s:</div>' . self::EOL;
+        protected const _DUMP_TOP = '<pre>';
+        protected const _DUMP_BOTTOM = '</pre>';
         protected const _SCALAR = '<span class="_scalar">%s</span> %s';
         protected const _STRING = '<span class="_string">\'%s\'</span> <i>(length=%s)</i>';
         protected const _INT = '<span class="_int">%s</span>';
@@ -395,7 +415,7 @@ DAMPSTYLE;
         protected const _NULL = '<span class="_null">null</span>';
         protected const _RESOURCE = '<b>resource</b>(<i>%s</i>, <i>%s</i>)';
         protected const _ARRAY = '%s<b>array</b> <i>(size=%s)</i>' . self::EOL;
-        protected const _EMPTY_ARRAY = '%s  <i><span class="_empty">empty</span></i>' . self::EOL;
+        protected const _EMPTY_ARRAY = '%s  <i class="_empty">empty</i>' . self::EOL;
         protected const _ARRAY_ITEM = '%s  %s <span class="_arrow">=&gt;</span> ';
         protected const _OBJECT = '%s<b>object</b>(<i>%s</i>)[<i>%s</i>]' . self::EOL;
         protected const _OBJECT_PROPERTY = '%s  %s %s <span class="_arrow">=&gt;</span> ';
