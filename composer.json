@@ -14,7 +14,7 @@
     },
     "autoload": {
         "files": [
-            "src/xdump.php"
+            "src/dump.php"
         ]
     }
 }
