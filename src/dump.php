@@ -46,7 +46,6 @@ namespace Satori\Debug {
          */
         protected const _FILE_PATH_AND_LINE = '%s:%s:' . self::EOL;
 
-
         /**
          * @var string Format of dump beginning.
          */
@@ -56,6 +55,12 @@ namespace Satori\Debug {
          * @var string Format of dump end.
          */
         protected const _DUMP_BOTTOM = '';
+
+        /**
+         * @var string Format of output for empty arguments.
+         */
+        protected const _EMPTY = 'empty';
+
         /**
          * @var string Format of a scalar value.
          */
@@ -141,6 +146,9 @@ namespace Satori\Debug {
         public function __construct(string $file, int $line, array $values)
         {
             $this->printFirstLine($file, $line);
+            if (empty($values)) {
+                $this->printEmptyArguments();
+            }
             foreach ($values as $value) {
                 $this->printValue($value);
             }
@@ -168,6 +176,14 @@ namespace Satori\Debug {
         {
             echo static::_DUMP_BOTTOM;
             echo static::_BOTTOM;
+        }
+
+        /**
+         * Prints output for empty arguments.
+         */
+        protected function printEmptyArguments(): void
+        {
+            echo static::_EMPTY;
         }
 
         /**
@@ -405,8 +421,9 @@ DAMPSTYLE;
         protected const _TOP = '<div class="_vardump">' . self::EOL;
         protected const _BOTTOM = '</div>' . self::EOL;
         protected const _FILE_PATH_AND_LINE = '<div class="_path">%s:%s:</div>' . self::EOL;
-        protected const _DUMP_TOP = '<pre>';
-        protected const _DUMP_BOTTOM = '</pre>';
+        protected const _DUMP_TOP = '<pre>' . self::EOL;
+        protected const _DUMP_BOTTOM = '</pre>' . self::EOL;
+        protected const _EMPTY = '<i class="_empty">empty</i>' . self::EOL;
         protected const _SCALAR = '<span class="_scalar">%s</span> %s';
         protected const _STRING = '<span class="_string">\'%s\'</span> <i>(length=%s)</i>';
         protected const _INT = '<span class="_int">%s</span>';
@@ -431,6 +448,7 @@ DAMPSTYLE;
         /**
          * @see \Satori\Debug\BaseVarDump Overridden constants.
          */
+        protected const _EMPTY = "\x1b[3;2mempty\x1b[0m";
         protected const _STRING = "\x1b[0;91m'%s'\x1b[0m \x1b[3m(length=%s)\x1b[0m";
         protected const _INT = "\x1b[0;32m%s\x1b[0m";
         protected const _FLOAT = "\x1b[0;33m%s\x1b[0m";
