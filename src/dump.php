@@ -127,6 +127,11 @@ namespace Satori\Debug {
         protected const _VISIBILITY = '%s';
 
         /**
+         * @var string Format of output for excess nesting.
+         */
+        protected const _MORE = '  ...' . self::EOL;
+
+        /**
          * @var array<string, string> Names of types to display.
          */
         protected const _TYPE_NAMES = [
@@ -135,6 +140,16 @@ namespace Satori\Debug {
             'double' => 'float',
             'string' => 'string',
         ];
+
+        /**
+         * @var int Max number of nested levels.
+         */
+        protected $maxNestedLevels = 10;
+
+        /**
+         * @var int Number of current level.
+         */
+        protected $currentLevel = 0;
 
         /**
          * Dumps information about the contents of variables.
@@ -150,6 +165,7 @@ namespace Satori\Debug {
                 $this->printEmptyArguments();
             }
             foreach ($values as $value) {
+                $this->currentLevel = 0;
                 $this->printValue($value);
             }
             $this->printLastLine();
@@ -214,10 +230,16 @@ namespace Satori\Debug {
         protected function printArray(array $array, string $indent = ''): void
         {
             echo $this->formatArray($array, $indent);
+            if ($this->currentLevel >= $this->maxNestedLevels) {
+                echo $indent . static::_MORE;
+                return;
+            }
+            $this->currentLevel++;
             foreach ($array as $key => $value) {
                 echo $this->formatArrayItem($key, $indent);
                 $this->printValue($value, $indent . static::_INDENT);
             }
+            $this->currentLevel--;
         }
 
         /**
@@ -228,7 +250,14 @@ namespace Satori\Debug {
          */
         protected function printObject(object $object, string $indent = ''): void
         {
-            echo $this->formatObject($object, $indent);
+            $class = get_class($object);
+            $id = spl_object_id($object);
+            echo $this->formatObject($class, $id, $indent);
+            if ($this->currentLevel >= $this->maxNestedLevels) {
+                echo $indent . static::_MORE;
+                return;
+            }
+            $this->currentLevel++;
             $properties = (new \ReflectionClass($object))->getProperties(
                 \ReflectionProperty::IS_PUBLIC |
                 \ReflectionProperty::IS_PROTECTED |
@@ -253,6 +282,7 @@ namespace Satori\Debug {
                 echo $this->formatObjectProperty($visibility, $property->getName(), $indent);
                 $this->printValue($value, $indent . static::_INDENT);
             }
+            $this->currentLevel--;
         }
 
         /**
@@ -350,11 +380,11 @@ namespace Satori\Debug {
          *
          * @return string
          */
-        protected function formatObject($object, string $indent = ''): string
+        protected function formatObject(string $class, int $id, string $indent = ''): string
         {
             $indent = $indent ? static::EOL . $indent : $indent;
 
-            return sprintf(static::_OBJECT, $indent, get_class($object), spl_object_id($object));
+            return sprintf(static::_OBJECT, $indent, $class, $id);
         }
 
         /**
