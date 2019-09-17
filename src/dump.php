@@ -355,16 +355,9 @@ namespace Satori\Debug {
                 \ReflectionProperty::IS_STATIC
             );
             foreach ($properties as $property) {
-                $property->setAccessible(true);
-                if ($property->isPublic()) {
-                    $visibility = 'public';
-                } elseif ($property->isProtected()) {
-                    $visibility = 'protected';
-                } elseif ($property->isPrivate()) {
-                    $visibility = 'private';
-                }
+                $visibility = $this->getPropertyVisibility($property);
                 if ($property->isStatic()) {
-                    $visibility = $visibility . ' static';
+                    $visibility .= ' static';
                     $value = $property->getValue();
                 } else {
                     $value = $property->getValue($object);
@@ -373,6 +366,27 @@ namespace Satori\Debug {
                 $this->printValue($value, $indent . static::_INDENT);
             }
             $this->currentLevel--;
+        }
+
+        /**
+         * Returns property visibility.
+         *
+         * @param \ReflectionProperty $property Reflection of the property.
+         *
+         * @return string
+         */
+        protected function getPropertyVisibility(\ReflectionProperty $property): string
+        {
+            $property->setAccessible(true);
+            if ($property->isPublic()) {
+                $visibility = 'public';
+            } elseif ($property->isProtected()) {
+                $visibility = 'protected';
+            } elseif ($property->isPrivate()) {
+                $visibility = 'private';
+            }
+
+            return $visibility;
         }
 
         /**
