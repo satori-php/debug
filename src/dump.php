@@ -184,13 +184,30 @@ namespace Satori\Debug {
          *
          * @return void
          */
-        public function configure(array $config): void
+        protected function configure(array $config): void
         {
-            if (isset($config['levels']) && $config['levels'] > 0) {
-                $this->maxNestedLevels = $levels;
+            if (isset($config['levels'])) {
+                $this->setMaxNestedLevels($config['levels']);
             }
         }
 
+        /**
+         * Sets max number of nested levels.
+         *
+         * @param int $number The number of nested levels.
+         *
+         * @throws \RangeException If the number is less than 1.
+         *
+         * @return void
+         */
+        protected function setMaxNestedLevels(int $number): void
+        {
+            if ($number > 0) {
+                $this->maxNestedLevels = $number;
+            } else {
+                throw new \RangeException(sprintf("Wrong number of levels: %s", $number));
+            }
+        }
         /**
          * Prints header.
          *
