@@ -137,7 +137,7 @@ namespace Satori\Debug {
         protected const _MORE = '%s  ...';
 
         /**
-         * @var array<string, string> Names of types to display.
+         * @var array Names of types to display.
          */
         protected const _TYPE_NAMES = [
             'boolean' => 'boolean',
@@ -157,41 +157,49 @@ namespace Satori\Debug {
         protected $currentLevel = 0;
 
         /**
-         * @var array<int, object> Processed objects.
+         * @var object[] Processed objects.
          */
         protected $objects = [];
 
         /**
          * Dumps information about the contents of variables.
          *
-         * @param string $file   The file path.
-         * @param int    $line   The line number.
-         * @param array  $values Values.
+         * @param string     $file   The file path.
+         * @param int        $line   The line number.
+         * @param mixed[]    $values Values.
+         * @param array|null $config Optional configuration.
          */
-        public function __construct(string $file, int $line, array $values, int $levels = null)
+        public function __construct(string $file, int $line, array $values, array $config = null)
         {
-            if ($levels > 0) {
-                $this->maxNestedLevels = $levels;
-            }
-            $this->printFirstLine($file, $line);
-            if (empty($values)) {
-                echo static::_EMPTY . static::EOL;
-            }
-            foreach ($values as $value) {
-                $this->currentLevel = 0;
-                $this->objects = [];
-                $this->printValue($value);
-            }
-            $this->printLastLine();
+            $this->configure($config ?? []);
+            $this->printHeader($file, $line);
+            $this->printBody($values);
+            $this->printFooter();
         }
 
         /**
-         * Prints first line.
+         * [configure description]
+         *
+         * @param array $config [description]
+         *
+         * @return void
+         */
+        public function configure(array $config): void
+        {
+            if (isset($config['levels']) && $config['levels'] > 0) {
+                $this->maxNestedLevels = $levels;
+            }
+        }
+
+        /**
+         * Prints header.
          *
          * @param string $file The file path.
          * @param int    $line The line number.
+         *
+         * @return void
          */
-        protected function printFirstLine(string $file, int $line): void
+        protected function printHeader(string $file, int $line): void
         {
             echo static::_STYLE;
             echo static::_TOP;
@@ -200,9 +208,30 @@ namespace Satori\Debug {
         }
 
         /**
-         * Prints list line.
+         * Prints body.
+         *
+         * @param mixed[] $values Values.
+         *
+         * @return void
          */
-        protected function printLastLine(): void
+        public function printBody(array $values): void
+        {
+            if (empty($values)) {
+                echo static::_EMPTY . static::EOL;
+            }
+            foreach ($values as $value) {
+                $this->currentLevel = 0;
+                $this->objects = [];
+                $this->printValue($value);
+            }
+        }
+
+        /**
+         * Prints footer.
+         *
+         * @return void
+         */
+        protected function printFooter(): void
         {
             echo static::_DUMP_BOTTOM;
             echo static::_BOTTOM . static::EOL;
@@ -213,6 +242,8 @@ namespace Satori\Debug {
          *
          * @param mixed  $value  The value.
          * @param string $indent The indent.
+         *
+         * @return void
          */
         protected function printValue($value, string $indent = ''): void
         {
@@ -232,6 +263,8 @@ namespace Satori\Debug {
          *
          * @param array  $array  The array.
          * @param string $indent The indent.
+         *
+         * @return void
          */
         protected function printArray(array $array, string $indent = ''): void
         {
@@ -256,6 +289,8 @@ namespace Satori\Debug {
          *
          * @param object $object The object.
          * @param string $indent The indent.
+         *
+         * @return void
          */
         protected function printObject(object $object, string $indent = ''): void
         {
@@ -442,6 +477,7 @@ namespace Satori\Debug {
         protected const _STYLE = <<<'DAMPSTYLE'
 <style>
     ._vardump {
+        margin-bottom: 1em;
         font-family: monospace;
     }
     ._vardump pre {
