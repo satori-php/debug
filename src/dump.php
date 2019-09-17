@@ -178,9 +178,9 @@ namespace Satori\Debug {
         }
 
         /**
-         * [configure description]
+         * Configures *VarDump.
          *
-         * @param array $config [description]
+         * @param array $config The configuration.
          *
          * @return void
          */
