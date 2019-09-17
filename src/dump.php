@@ -348,12 +348,7 @@ namespace Satori\Debug {
         {
             $this->currentLevel++;
             $this->objects[] = $object;
-            $properties = (new \ReflectionClass($object))->getProperties(
-                \ReflectionProperty::IS_PUBLIC |
-                \ReflectionProperty::IS_PROTECTED |
-                \ReflectionProperty::IS_PRIVATE |
-                \ReflectionProperty::IS_STATIC
-            );
+            $properties = $this->getReflectionProperties($object);
             foreach ($properties as $property) {
                 $visibility = $this->getPropertyVisibility($property);
                 if ($property->isStatic()) {
@@ -366,6 +361,25 @@ namespace Satori\Debug {
                 $this->printValue($value, $indent . static::_INDENT);
             }
             $this->currentLevel--;
+        }
+
+        /**
+         * Returns an array of reflection properties.
+         *
+         * @param object $object The object.
+         *
+         * @return array
+         */
+        protected function getReflectionProperties(object $object): array
+        {
+            $reflection = new \ReflectionClass($object);
+            var_dump($reflection);
+            return $reflection->getProperties(
+                \ReflectionProperty::IS_PUBLIC |
+                \ReflectionProperty::IS_PROTECTED |
+                \ReflectionProperty::IS_PRIVATE |
+                \ReflectionProperty::IS_STATIC
+            );
         }
 
         /**
