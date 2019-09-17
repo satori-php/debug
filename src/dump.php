@@ -293,6 +293,19 @@ namespace Satori\Debug {
                 echo sprintf(static::_MORE, $indent) . static::EOL;
                 return;
             }
+            $this->printArrayItems($array, $indent);
+        }
+
+        /**
+         * Prints array items.
+         *
+         * @param array  $array  The array.
+         * @param string $indent The indent.
+         *
+         * @return void
+         */
+        protected function printArrayItems(array $array, string $indent): void
+        {
             $this->currentLevel++;
             foreach ($array as $key => $value) {
                 echo $this->formatArrayItem($key, $indent);
