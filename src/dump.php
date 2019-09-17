@@ -333,6 +333,19 @@ namespace Satori\Debug {
                 echo sprintf(static::_MORE, $indent) . static::EOL;
                 return;
             }
+            $this->printObjectProperties($object, $indent);
+        }
+
+        /**
+         * Prints object properties.
+         *
+         * @param object $object The object.
+         * @param string $indent The indent.
+         *
+         * @return void
+         */
+        protected function printObjectProperties(object $object, string $indent): void
+        {
             $this->currentLevel++;
             $this->objects[] = $object;
             $properties = (new \ReflectionClass($object))->getProperties(
@@ -472,6 +485,7 @@ namespace Satori\Debug {
         protected function formatObjectProperty(string $visibility, string $name, string $indent = ''): string
         {
             $visibility = sprintf(static::_VISIBILITY, $visibility);
+
             return sprintf(static::_OBJECT_PROPERTY, $indent, $visibility, $this->formatKey($name));
         }
 
