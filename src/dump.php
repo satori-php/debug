@@ -107,9 +107,9 @@ namespace Satori\Debug {
         protected const _EMPTY_ARRAY = '%s  empty';
 
         /**
-         * @var string Format of array item.
+         * @var string Format of array key.
          */
-        protected const _ARRAY_ITEM = '%s  %s => ';
+        protected const _ARRAY_KEY = '%s  %s => ';
 
         /**
          * @var string Format of an object.
@@ -117,9 +117,19 @@ namespace Satori\Debug {
         protected const _OBJECT = '%sobject(%s)[%s]';
 
         /**
+         * @var string Format of output for recursion.
+         */
+        protected const _RECURSION = '%s*RECURSION* %s...';
+
+        /**
+         * @var string Format of object key.
+         */
+        protected const _OBJECT_KEY = '%s  %s => ';
+
+        /**
          * @var string Format of object property.
          */
-        protected const _OBJECT_PROPERTY = '%s  %s %s => ';
+        protected const _PROPERTY = '%s \'%s\'';
 
         /**
          * @var string Visibility of object property.
@@ -127,17 +137,12 @@ namespace Satori\Debug {
         protected const _VISIBILITY = '%s';
 
         /**
-         * @var string Format of output for recursion.
-         */
-        protected const _RECURSION = '%s*RECURSION* %s...';
-
-        /**
          * @var string Format of output for excess nesting.
          */
         protected const _MORE = '%s  ...';
 
         /**
-         * @var array<string, string> Names of types to display.
+         * @var array Names of types to display.
          */
         protected const _TYPE_NAMES = [
             'boolean' => 'boolean',
@@ -157,41 +162,66 @@ namespace Satori\Debug {
         protected $currentLevel = 0;
 
         /**
-         * @var array<int, object> Processed objects.
+         * @var object[] Processed objects.
          */
         protected $objects = [];
 
         /**
          * Dumps information about the contents of variables.
          *
-         * @param string $file   The file path.
-         * @param int    $line   The line number.
-         * @param array  $values Values.
+         * @param string     $file   The file path.
+         * @param int        $line   The line number.
+         * @param mixed[]    $values Values.
+         * @param array|null $config Optional configuration.
          */
-        public function __construct(string $file, int $line, array $values, int $levels = null)
+        public function __construct(string $file, int $line, array $values, array $config = null)
         {
-            if ($levels > 0) {
-                $this->maxNestedLevels = $levels;
-            }
-            $this->printFirstLine($file, $line);
-            if (empty($values)) {
-                echo static::_EMPTY . static::EOL;
-            }
-            foreach ($values as $value) {
-                $this->currentLevel = 0;
-                $this->objects = [];
-                $this->printValue($value);
-            }
-            $this->printLastLine();
+            $this->configure($config ?? []);
+            $this->printHeader($file, $line);
+            $this->printBody($values);
+            $this->printFooter();
         }
 
         /**
-         * Prints first line.
+         * Configures *VarDump.
+         *
+         * @param array $config The configuration.
+         *
+         * @return void
+         */
+        protected function configure(array $config): void
+        {
+            if (isset($config['levels'])) {
+                $this->setMaxNestedLevels($config['levels']);
+            }
+        }
+
+        /**
+         * Sets max number of nested levels.
+         *
+         * @param int $number The number of nested levels.
+         *
+         * @throws \RangeException If the number is less than 1.
+         *
+         * @return void
+         */
+        protected function setMaxNestedLevels(int $number): void
+        {
+            if ($number > 0) {
+                $this->maxNestedLevels = $number;
+            } else {
+                throw new \RangeException(sprintf("Wrong number of levels: %s", $number));
+            }
+        }
+        /**
+         * Prints header.
          *
          * @param string $file The file path.
          * @param int    $line The line number.
+         *
+         * @return void
          */
-        protected function printFirstLine(string $file, int $line): void
+        protected function printHeader(string $file, int $line): void
         {
             echo static::_STYLE;
             echo static::_TOP;
@@ -200,9 +230,30 @@ namespace Satori\Debug {
         }
 
         /**
-         * Prints list line.
+         * Prints body.
+         *
+         * @param mixed[] $values Values.
+         *
+         * @return void
          */
-        protected function printLastLine(): void
+        public function printBody(array $values): void
+        {
+            if (empty($values)) {
+                echo static::_EMPTY . static::EOL;
+            }
+            foreach ($values as $value) {
+                $this->currentLevel = 0;
+                $this->objects = [];
+                $this->printValue($value);
+            }
+        }
+
+        /**
+         * Prints footer.
+         *
+         * @return void
+         */
+        protected function printFooter(): void
         {
             echo static::_DUMP_BOTTOM;
             echo static::_BOTTOM . static::EOL;
@@ -213,6 +264,8 @@ namespace Satori\Debug {
          *
          * @param mixed  $value  The value.
          * @param string $indent The indent.
+         *
+         * @return void
          */
         protected function printValue($value, string $indent = ''): void
         {
@@ -221,7 +274,7 @@ namespace Satori\Debug {
             } elseif (is_object($value)) {
                 $this->printObject($value, $indent);
             } elseif (is_scalar($value)) {
-                echo $this->formatScalar($value, $indent) . static::EOL;
+                echo $this->formatScalarValue($value, $indent) . static::EOL;
             } else {
                 echo $this->formatValue($value) . static::EOL;
             }
@@ -232,10 +285,12 @@ namespace Satori\Debug {
          *
          * @param array  $array  The array.
          * @param string $indent The indent.
+         *
+         * @return void
          */
         protected function printArray(array $array, string $indent = ''): void
         {
-            echo $this->formatArray($array, $indent) . static::EOL;
+            echo $this->formatArrayHeader($array, $indent) . static::EOL;
             if (empty($array)) {
                 echo sprintf(static::_EMPTY_ARRAY, $indent) . static::EOL;
                 return;
@@ -243,9 +298,22 @@ namespace Satori\Debug {
                 echo sprintf(static::_MORE, $indent) . static::EOL;
                 return;
             }
+            $this->printArrayItems($array, $indent);
+        }
+
+        /**
+         * Prints array items.
+         *
+         * @param array  $array  The array.
+         * @param string $indent The indent.
+         *
+         * @return void
+         */
+        protected function printArrayItems(array $array, string $indent): void
+        {
             $this->currentLevel++;
             foreach ($array as $key => $value) {
-                echo $this->formatArrayItem($key, $indent);
+                echo $this->formatArrayKey($key, $indent);
                 $this->printValue($value, $indent . static::_INDENT);
             }
             $this->currentLevel--;
@@ -256,57 +324,90 @@ namespace Satori\Debug {
          *
          * @param object $object The object.
          * @param string $indent The indent.
+         *
+         * @return void
          */
         protected function printObject(object $object, string $indent = ''): void
         {
             if (in_array($object, $this->objects)) {
-                echo $this->formatRecursion($object, $indent) . static::EOL;
+                echo $this->formatRecursionHeader($object, $indent) . static::EOL;
                 return;
             }
-            echo $this->formatObject($object, $indent) . static::EOL;
+            echo $this->formatObjectHeader($object, $indent) . static::EOL;
             if ($this->currentLevel >= $this->maxNestedLevels) {
                 echo sprintf(static::_MORE, $indent) . static::EOL;
                 return;
             }
+            $this->objects[$this->currentLevel] = $object;
+            $this->printObjectProperties($object, $indent);
+            unset($this->objects[$this->currentLevel]);
+        }
+
+        /**
+         * Prints object properties.
+         *
+         * @param object $object The object.
+         * @param string $indent The indent.
+         *
+         * @return void
+         */
+        protected function printObjectProperties(object $object, string $indent): void
+        {
             $this->currentLevel++;
-            $this->objects[] = $object;
-            $properties = (new \ReflectionClass($object))->getProperties(
-                \ReflectionProperty::IS_PUBLIC |
-                \ReflectionProperty::IS_PROTECTED |
-                \ReflectionProperty::IS_PRIVATE |
-                \ReflectionProperty::IS_STATIC
-            );
+            $properties = $this->getReflectionProperties($object);
             foreach ($properties as $property) {
-                $property->setAccessible(true);
-                if ($property->isPublic()) {
-                    $visibility = 'public';
-                } elseif ($property->isProtected()) {
-                    $visibility = 'protected';
-                } elseif ($property->isPrivate()) {
-                    $visibility = 'private';
-                }
+                $visibility = $this->getPropertyVisibility($property);
                 if ($property->isStatic()) {
-                    $visibility = $visibility . ' static';
+                    $visibility .= ' static';
                     $value = $property->getValue();
                 } else {
                     $value = $property->getValue($object);
                 }
-                echo $this->formatObjectProperty($visibility, $property->getName(), $indent);
+                $visibility = sprintf(static::_VISIBILITY, $visibility);
+                $key = sprintf(static::_PROPERTY, $visibility, $property->getName());
+                echo $this->formatObjectKey($key, $indent);
                 $this->printValue($value, $indent . static::_INDENT);
             }
             $this->currentLevel--;
         }
 
         /**
-         * Formats a key in an array or a name of object property.
+         * Returns an array of reflection properties.
          *
-         * @param int|string $key The unique key.
+         * @param object $object The object.
+         *
+         * @return array
+         */
+        protected function getReflectionProperties(object $object): array
+        {
+            $reflection = new \ReflectionClass($object);
+            return $reflection->getProperties(
+                \ReflectionProperty::IS_PUBLIC |
+                \ReflectionProperty::IS_PROTECTED |
+                \ReflectionProperty::IS_PRIVATE |
+                \ReflectionProperty::IS_STATIC
+            );
+        }
+
+        /**
+         * Returns property visibility.
+         *
+         * @param \ReflectionProperty $property Reflection of the property.
          *
          * @return string
          */
-        protected function formatKey($key): string
+        protected function getPropertyVisibility(\ReflectionProperty $property): string
         {
-            return sprintf(is_int($key) ? '%s' : "'%s'", $key);
+            $property->setAccessible(true);
+            if ($property->isPublic()) {
+                $visibility = 'public';
+            } elseif ($property->isProtected()) {
+                $visibility = 'protected';
+            } elseif ($property->isPrivate()) {
+                $visibility = 'private';
+            }
+
+            return $visibility;
         }
 
         /**
@@ -344,7 +445,7 @@ namespace Satori\Debug {
          *
          * @return string
          */
-        protected function formatScalar($value, string $indent = ''): string
+        protected function formatScalarValue($value, string $indent = ''): string
         {
             $originalTypeName = gettype($value);
             $typeName = static::_TYPE_NAMES[$originalTypeName] ?? $originalTypeName;
@@ -360,7 +461,7 @@ namespace Satori\Debug {
          *
          * @return string
          */
-        protected function formatArray(array $array, string $indent = ''): string
+        protected function formatArrayHeader(array $array, string $indent = ''): string
         {
             $firstIndent = $indent ? static::EOL . $indent : $indent;
 
@@ -370,14 +471,16 @@ namespace Satori\Debug {
         /**
          * Formats information about array item.
          *
-         * @param int|string  $key    The unique key.
-         * @param string      $indent The indent.
+         * @param int|string $key    The unique key.
+         * @param string     $indent The indent.
          *
          * @return string
          */
-        protected function formatArrayItem($key, string $indent = ''): string
+        protected function formatArrayKey($key, string $indent = ''): string
         {
-            return sprintf(static::_ARRAY_ITEM, $indent, $this->formatKey($key));
+            $key = sprintf(is_int($key) ? '%s' : "'%s'", $key);
+
+            return sprintf(static::_ARRAY_KEY, $indent, $key);
         }
 
         /**
@@ -388,7 +491,7 @@ namespace Satori\Debug {
          *
          * @return string
          */
-        protected function formatObject(object $object, string $indent = ''): string
+        protected function formatObjectHeader(object $object, string $indent = ''): string
         {
             $indent = $indent ? static::EOL . $indent : $indent;
 
@@ -396,21 +499,6 @@ namespace Satori\Debug {
         }
 
         /**
-         * Formats information about object property.
-         *
-         * @param string $visibility The visibility.
-         * @param string $name       The property name.
-         * @param string $indent     The indent.
-         *
-         * @return string
-         */
-        protected function formatObjectProperty(string $visibility, string $name, string $indent = ''): string
-        {
-            $visibility = sprintf(static::_VISIBILITY, $visibility);
-            return sprintf(static::_OBJECT_PROPERTY, $indent, $visibility, $this->formatKey($name));
-        }
-
-        /**
          * Formats information about an object.
          *
          * @param object $object The object.
@@ -418,7 +506,7 @@ namespace Satori\Debug {
          *
          * @return string
          */
-        protected function formatRecursion(object $object, string $indent = ''): string
+        protected function formatRecursionHeader(object $object, string $indent = ''): string
         {
             $indent = $indent ? static::EOL . $indent : $indent;
 
@@ -427,6 +515,19 @@ namespace Satori\Debug {
                 $indent,
                 sprintf(static::_OBJECT, '', get_class($object), spl_object_id($object))
             );
+        }
+
+        /**
+         * Formats information about object property.
+         *
+         * @param string $key    The property key.
+         * @param string $indent The indent.
+         *
+         * @return string
+         */
+        protected function formatObjectKey(string $key, string $indent = ''): string
+        {
+            return sprintf(static::_OBJECT_KEY, $indent, $key);
         }
     }
 
@@ -442,6 +543,7 @@ namespace Satori\Debug {
         protected const _STYLE = <<<'DAMPSTYLE'
 <style>
     ._vardump {
+        margin-bottom: 1em;
         font-family: monospace;
     }
     ._vardump pre {
@@ -493,9 +595,9 @@ DAMPSTYLE;
         protected const _RESOURCE = '<b>resource</b>(<i>%s</i>, <i>%s</i>)';
         protected const _ARRAY = '%s<b>array</b> <i>(size=%s)</i>';
         protected const _EMPTY_ARRAY = '%s  <i class="_empty">empty</i>';
-        protected const _ARRAY_ITEM = '%s  %s <span class="_arrow">=&gt;</span> ';
+        protected const _ARRAY_KEY = '%s  %s <span class="_arrow">=&gt;</span> ';
         protected const _OBJECT = '%s<b>object</b>(<i>%s</i>)[<i>%s</i>]';
-        protected const _OBJECT_PROPERTY = '%s  %s %s <span class="_arrow">=&gt;</span> ';
+        protected const _OBJECT_KEY = '%s  %s <span class="_arrow">=&gt;</span> ';
         protected const _VISIBILITY = '<span class="_visibility">%s</span>';
         protected const _RECURSION = '%s<i class="_recursion">*RECURSION*</i> %s...';
     }
@@ -518,9 +620,9 @@ DAMPSTYLE;
         protected const _RESOURCE = "resource(%s, %s)";
         protected const _ARRAY = "%s\x1b[1marray\x1b[0m \x1b[3m(size=%s)\x1b[0m";
         protected const _EMPTY_ARRAY = "%s  \x1b[3;2mempty\x1b[0m";
-        protected const _ARRAY_ITEM = "%s  %s \x1b[2m=>\x1b[0m ";
+        protected const _ARRAY_KEY = "%s  %s \x1b[2m=>\x1b[0m ";
         protected const _OBJECT = "%s\x1b[1mobject\x1b[0m(\x1b[3m%s\x1b[0m)[\x1b[3m%s\x1b[0m]";
-        protected const _OBJECT_PROPERTY = "%s  %s %s \x1b[2m=>\x1b[0m ";
+        protected const _OBJECT_KEY = "%s  %s \x1b[2m=>\x1b[0m ";
         protected const _VISIBILITY = "\x1b[2m%s\x1b[0m";
         protected const _RECURSION = "%s\x1b[3;32m*RECURSION*\x1b[0m %s...";
     }
