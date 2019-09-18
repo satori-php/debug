@@ -107,7 +107,7 @@ namespace Satori\Debug {
         protected const _EMPTY_ARRAY = '%s  empty';
 
         /**
-         * @var string Format of array item.
+         * @var string Format of array key.
          */
         protected const _ARRAY_KEY = '%s  %s => ';
 
@@ -122,12 +122,12 @@ namespace Satori\Debug {
         protected const _RECURSION = '%s*RECURSION* %s...';
 
         /**
-         * @var string Format of object property.
+         * @var string Format of object key.
          */
         protected const _OBJECT_KEY = '%s  %s => ';
 
         /**
-         * @var string Visibility of object property.
+         * @var string Format of object property.
          */
         protected const _PROPERTY = '%s \'%s\'';
 
