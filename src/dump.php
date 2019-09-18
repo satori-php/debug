@@ -338,7 +338,9 @@ namespace Satori\Debug {
                 echo sprintf(static::_MORE, $indent) . static::EOL;
                 return;
             }
+            $this->objects[$this->currentLevel] = $object;
             $this->printObjectProperties($object, $indent);
+            unset($this->objects[$this->currentLevel]);
         }
 
         /**
@@ -352,7 +354,6 @@ namespace Satori\Debug {
         protected function printObjectProperties(object $object, string $indent): void
         {
             $this->currentLevel++;
-            $this->objects[] = $object;
             $properties = $this->getReflectionProperties($object);
             foreach ($properties as $property) {
                 $visibility = $this->getPropertyVisibility($property);
