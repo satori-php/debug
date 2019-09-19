@@ -636,6 +636,10 @@ namespace {
         /**
          * Dumps monochrome information about contents of variables.
          * Similar xdebug var_dump.
+         *
+         * @param mixed ...$values One or more values.
+         *
+         * @return void
          */
         function _dump(...$values): void
         {
@@ -648,6 +652,10 @@ namespace {
         /**
          * Dumps color information about contents of variables.
          * Similar xdebug var_dump.
+         *
+         * @param mixed ...$values One or more values.
+         *
+         * @return void
          */
         function dump(...$values): void
         {
@@ -664,6 +672,10 @@ namespace {
         /**
          * Dumps color information about contents of variables and dies.
          * Similar xdebug var_dump.
+         *
+         * @param mixed ...$values One or more values.
+         *
+         * @return void
          */
         function dd(...$values): void
         {
@@ -681,6 +693,11 @@ namespace {
         /**
          * Dumps color information about contents of variables.
          * Similar xdebug var_dump.
+         *
+         * @param mixed[] $values The array with values [$var1, $var2, $var3].
+         * @param array   $config The configuration ['levels' => 5].
+         *
+         * @return void
          */
         function xdump(array $values, array $config = null): void
         {
@@ -697,6 +714,11 @@ namespace {
         /**
          * Dumps color information about contents of variables and dies.
          * Similar xdebug var_dump.
+         *
+         * @param mixed[] $values The array with values [$var1, $var2, $var3].
+         * @param array   $config The configuration ['levels' => 5].
+         *
+         * @return void
          */
         function xdd(array $values, array $config = null): void
         {
@@ -714,6 +736,10 @@ namespace {
         /**
          * Dumps monochrome information about contents of variables for a javascript console.
          * Similar xdebug var_dump.
+         *
+         * @param mixed ...$values One or more values.
+         *
+         * @return void
          */
         function jsdump(...$values): void
         {
