@@ -677,6 +677,39 @@ namespace {
         }
     }
 
+    if (!function_exists('xdump')) {
+        /**
+         * Dumps color information about contents of variables.
+         * Similar xdebug var_dump.
+         */
+        function xdump(array $values, array $config = null): void
+        {
+            $call = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 1)[0];
+            if (php_sapi_name() === 'cli') {
+                new CliVarDump($call['file'], $call['line'], $values, $config);
+            } else {
+                new WebVarDump($call['file'], $call['line'], $values, $config);
+            }
+        }
+    }
+
+    if (!function_exists('xdd')) {
+        /**
+         * Dumps color information about contents of variables and dies.
+         * Similar xdebug var_dump.
+         */
+        function xdd(array $values, array $config = null): void
+        {
+            $call = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 1)[0];
+            if (php_sapi_name() === 'cli') {
+                new CliVarDump($call['file'], $call['line'], $values, $config);
+            } else {
+                new WebVarDump($call['file'], $call['line'], $values, $config);
+            }
+            die();
+        }
+    }
+
     if (!function_exists('jsdump')) {
         /**
          * Dumps monochrome information about contents of variables for a javascript console.
